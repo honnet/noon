@@ -3,6 +3,14 @@ APP_DIR = sifteo
 APP     = $(APP_DIR)/$(TARGET).elf
 CFLAGS  = -Wall # -O2
 
+USING   = # "C++"
+ifeq ($(USING), "C++")
+	EXE = ./$(TARGET)
+else
+	EXE = python rtmidi_test.py
+endif
+
+
 BUILD_PLATFORM := $(shell uname)
 
 ifeq ($(BUILD_PLATFORM), Linux)
@@ -23,6 +31,7 @@ endif
 
 .PHONY: install test live clean xclean
 
+
 $(TARGET): *.cpp
 	$(CC) *.cpp $(CFLAGS) $(LFLAGS) -o $(TARGET)
 
@@ -33,10 +42,10 @@ install: $(APP)
 	make -C $(APP_DIR) install
 
 test: $(APP) $(TARGET)
-	siftulator $(APP) --flush-logs | ./$(TARGET)
+	siftulator $(APP) --flush-logs | $(EXE)
 
 live: install $(TARGET)
-	swiss listen $(APP) --flush-logs | ./$(TARGET)
+	swiss listen $(APP) --flush-logs | $(EXE)
 
 clean:
 	rm -f $(TARGET) *.o
