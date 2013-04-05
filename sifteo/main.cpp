@@ -30,7 +30,7 @@ void main() {
         while(iter.next()) {
             float newZ = iter.accel().z * COEF + oldZ * (1.0-COEF); // smooth
             int velocity = MIN(2*newZ, 127);
-            LOG( "%d,%d\n", cube.isTouching(), velocity);
+            LOG( "%d,%d\r\n", cube.isTouching(), velocity);
             oldZ = newZ;
         }
 

@@ -1,6 +1,7 @@
-TARGET  = noon
+PROJECT = noon
 APP_DIR = sifteo
-APP     = $(APP_DIR)/$(TARGET).elf
+APP     = $(APP_DIR)/$(PROJECT).elf
+TARGET  = $(PROJECT)
 CFLAGS  = -Wall # -O2
 
 USING   = # "C++"
@@ -8,29 +9,32 @@ ifeq ($(USING), "C++")
 	EXE = ./$(TARGET)
 else
 	EXE = python rtmidi_test.py
+	TARGET =
 endif
 
 
 BUILD_PLATFORM := $(shell uname)
 
 ifeq ($(BUILD_PLATFORM), Linux)
-	CC 		= g++
+	CC      = g++
 	CFLAGS += -D__LINUX_ALSA__
 	LFLAGS  = -lasound -lpthread -lrtmidi
-endif
-ifeq ($(BUILD_PLATFORM), Darwin) # TODO test it!
-	CC 		= clang++
-	CFLAGS += -D__MACOSX_CORE__
-	LFLAGS  = -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
-endif
-ifeq ($(BUILD_PLATFORM), windows32) # TODO test it!
-	CC 		= mingw32-gcc
-	CFLAGS +=
-	LFLAGS  =
+else
+	ifeq ($(BUILD_PLATFORM), Darwin) # TODO test it!
+		CC      = clang++
+		CFLAGS += -D__MACOSX_CORE__
+		LFLAGS  = -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
+	else
+	#ifeq ($(BUILD_PLATFORM), windows32) # TODO test it!
+		CC      = g++
+		CFLAGS +=
+		LFLAGS  =
+	endif
 endif
 
-.PHONY: install test live clean xclean
+.PHONY: all install test live clean xclean
 
+all: test
 
 $(TARGET): *.cpp
 	$(CC) *.cpp $(CFLAGS) $(LFLAGS) -o $(TARGET)
