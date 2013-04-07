@@ -26,8 +26,13 @@ midiout = rtmidi.MidiOut()
 available_ports = midiout.get_ports()
 
 if available_ports:
-    print "Using the 1st available ports in:", available_ports
-    midiout.open_port(0)
+    if len(available_ports) > 0:
+        print "Available ports:", available_ports
+        portNum = 1
+    else:
+        portNum = 0
+    midiout.open_port(portNum)
+    print "Using the port '", available_ports[portNum], "'"
 else:
     print "Using VirtualRtMidiPort."
     midiout.open_virtual_port("VirtualRtMidiPort")
@@ -47,14 +52,14 @@ while True:
         continue
 
     # the accelerometer gives 64 for 1g but we want 127:
-    velocity = min(127, abs(int(match.group(2))) * 2)
+    velocity = abs(int(match.group(2)))
     button_new = int(match.group(1))
 
     if button_new and not button_old:           # button rising edge
-        print "\nnote on, velocity:", velocity
         note_on(0, note, velocity)
+        print "\nnote on, velocity:", velocity
     elif not button_new and button_old:         # button falling edge
-        print "note off"
+        #print "note off"
         note_off(0, note)
 
     button_old = button_new
