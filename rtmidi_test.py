@@ -3,66 +3,156 @@ import sys
 import time
 import rtmidi
 
-################################################################################
+def mapping(group, effect, value):
+    return 3 * (group * 4 + effect) + value
 
-def note_on(channel, note, velocity):
-    assert (channel  >= 0) & (channel  <= 15)
-    assert (note     >= 0) & (note     <= 127)
-    assert (velocity >= 0) & (velocity <= 127)
-    channelON  = 0x90 | channel
-    note_on =  [channelON, note, velocity]
-    midiout.send_message(note_on)
+class Midi:
+    midiout = rtmidi.MidiOut()
 
-def note_off(channel, note):
-    assert (channel  >= 0) & (channel  <= 15)
-    assert (note     >= 0) & (note     <= 127)
-    channelOFF  = 0x80 | channel
-    note_off = [channelOFF, note, 0]
-    midiout.send_message(note_off)
+    def __init__(self):
+      available_ports = self.midiout.get_ports()
+      if available_ports:
+          if len(available_ports) > 0:
+              print "Available ports:", available_ports
+              portNum = 1
+          else:
+              portNum = 0
+          self.midiout.open_port(portNum)
+          print "Using the port '", available_ports[portNum], "'"
+      else:
+          print "Using VirtualRtMidiPort."
+          self.midiout.open_virtual_port("VirtualRtMidiPort")
 
-################################################################################
+    def note_on(self, channel, note, velocity):
+        channelON = 0x90 | channel
+        note_on = [channelON, note, velocity]
+        self.midiout.send_message(note_on)
 
-midiout = rtmidi.MidiOut()
-available_ports = midiout.get_ports()
+    def note_off(self, channel, note):
+        channelOFF = 0x80 | channel
+        note_off = [channelOFF, note, 0]
+        self.midiout.send_message(note_off)
 
-if available_ports:
-    if len(available_ports) > 0:
-        print "Available ports:", available_ports
-        portNum = 1
-    else:
-        portNum = 0
-    midiout.open_port(portNum)
-    print "Using the port '", available_ports[portNum], "'"
-else:
-    print "Using VirtualRtMidiPort."
-    midiout.open_virtual_port("VirtualRtMidiPort")
+    def cc(self, channel, number, value):
+        print 'control_change<{}:{}:{}>'.format(channel, number, value)
+        channelCC = 0xB0 | channel
+        cc = [channelCC, number, value]
+        self.midiout.send_message(cc)
 
-button_old = False
-note = 42 # random
+class Controller (object):
+    def __init__(self, midi):
+        self.midi = midi
 
-while True:
-    line = sys.stdin.readline()
-    if not line:
-        break
-    # we receive :
-    #  1) a boolean for the touch (0 or 1)
-    #  2) a signed char for the tilt (-128 to 127)
-    match = re.match(r'([0-1]),(-?[0-9]{1,3})', line)
-    if not match:
-        continue
+class Transport (Controller):
+    def __init__(self, midi):
+        super(Transport, self).__init__(midi)
 
-    # the accelerometer gives 64 for 1g but we want 127:
-    velocity = abs(int(match.group(2)))
-    button_new = int(match.group(1))
+    def prev_scene(self): # TODO
+        Pass
 
-    if button_new and not button_old:           # button rising edge
-        note_on(0, note, velocity)
-        print "\nnote on, velocity:", velocity
-    elif not button_new and button_old:         # button falling edge
-        #print "note off"
-        note_off(0, note)
+    def next_scene(self):
+        self.midi.cc(15, 15, 127)
 
-    button_old = button_new
+class Group (Controller):
+    def __init__(self, id_, midi):
+        super(Group, self).__init__(midi)
+        self.id = id_
+        self.effects = []
 
-del midiout
+    def effect(self, effect):
+        return self.effects[effect]
 
+class Effect (Controller):
+    def __init__(self, id_, midi, group):
+        super(Effect, self).__init__(midi)
+        self.group = group
+        self.id = id_
+
+    def control(self, offset):
+        return mapping(self.group.id, self.id, offset)
+
+    def activate(self, active=True):
+        control = self.control(0)
+        self.midi.cc(1, control, 127 if active else 0)
+
+    def deactivate(self):
+        self.activate(False)
+
+class Effect1D (Effect):
+    def __init__(self, id_, midi, group):
+        super(Effect1D, self).__init__(id_, midi, group)
+
+    def set_value(self, value):
+        control = self.control(1)
+        self.midi.cc(1, control, value)
+
+    def set_value_from_accelerometer(self, x, y, z):
+        self.set_value(z)
+
+class Effect2D (Effect):
+    def __init__(self, id_, midi, group):
+        super(Effect2D, self).__init__(id_, midi, group)
+
+    def set_value(self, x, y):
+        control = self.control(1)
+        self.midi.cc(1, control, x)
+        control = self.control(2)
+        self.midi.cc(1, control, y)
+
+    def set_value_from_accelerometer(self, x, y, z):
+        self.set_value(x, y)
+
+class Parser:
+    def __init__(self):
+        self.midi = Midi()
+        self.groups = []
+        for i in range(0, 5):
+            group = Group(i, self.midi)
+            for j in range(0, 4):
+                group.effects.append(Effect2D(j, self.midi, group))
+            self.groups.append(group)
+
+        self.transport = Transport(self.midi)
+
+    def parse(self):
+        while True:
+            line = sys.stdin.readline()
+            if not line:
+                break
+
+            cmd = line[0]
+
+            if cmd == 'A':
+                group = int(line[1])
+                effect = int(line[2])
+                self.groups[group].effect(effect).activate()
+            elif cmd == 'E':
+                group = int(line[1])
+                effect = int(line[2])
+                x, y, z = [int(v) for v in line[3:].split(':')]
+                self.groups[group].effect(effect).set_value_from_accelerometer(x, y, z)
+            elif cmd == 'D':
+                group = int(line[1])
+                effect = int(line[2])
+                self.groups[group].effect(effect).deactivate()
+            elif cmd == 'N':
+                self.transport.next_scene()
+
+def main():
+    parser = Parser()
+    parser.parse()
+
+if __name__ == '__main__':
+    main()
+
+    # Midi Learn code:
+    # comment the main call on top!
+    #midi = Midi()
+    #for group in range(0, 5):
+    #    for effect in range(0, 4):
+    #        for i, value in zip(range(0, 3), ['active', 'x', 'y']):
+    #            cc = mapping(group, effect, i)
+    #            print 'group:{} effect:{} {}'.format(group, effect, value)
+    #            raw_input()
+    #            midi.cc(1, cc, 127)
+    #            print '\n'
