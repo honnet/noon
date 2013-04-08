@@ -54,9 +54,21 @@ private:
 
         // Draw the cube's identity
         String<128> str;
-        str << "I am cube #" << cube << "\n";
-        str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
-        vid[cube].bg0rom.text(vec(1,2), str);
+        if (id) {
+            str << "\n\n\n\n\n";
+            str << "     TRACK\n\n";
+            str << "   NUMBER: " << cube << "\n";
+        } else {
+            str << "      0\n";
+            str << "\n\n\n\n";
+            str << "    CONTROL\n";
+            str << "1\n";
+            str << "             3\n";
+            str << "     CUBE\n";
+            str << "\n\n\n\n";
+            str << "       2\n";
+        }
+        vid[cube].bg0rom.text(vec(1,1), str);
 
         // Draw initial state for all sensors
         onAccelChange(cube);
@@ -70,11 +82,6 @@ private:
     {
         CubeID cube(id);
         counters[id].touch++;
-
-        String<32> str;
-        str << "touch: " << cube.isTouching() <<
-            " (" << counters[cube].touch << ")\n";
-        vid[cube].bg0rom.text(vec(1,9), str);
     }
 
     void onAccelChange(unsigned id)
@@ -82,23 +89,9 @@ private:
         CubeID cube(id);
         auto accel = cube.accel();
 
-        String<64> str;
-        str << "acc: "
-            << Fixed(accel.x, 3)
-            << Fixed(accel.y, 3)
-            << Fixed(accel.z, 3) << "\n";
-
         unsigned changeFlags = motion[id].update();
         if (changeFlags) {
             // Tilt/shake changed
-
-            auto tilt = motion[id].tilt;
-            str << "tilt:"
-                << Fixed(tilt.x, 3)
-                << Fixed(tilt.y, 3)
-                << Fixed(tilt.z, 3) << "\n";
-
-            str << "shake: " << motion[id].shake;
 
             if (id == kControlCube && motion[kControlCube].shake) {
                 if (!an_fx_is_affected) {
@@ -117,8 +110,6 @@ private:
             // Effect F modulation for group G (format: EGFXXX:YYY:ZZZ)
             LOG("E%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
         }
-
-        vid[cube].bg0rom.text(vec(1,10), str);
     }
 
     void onNeighborRemove(unsigned firstID, unsigned firstSide, unsigned secondID, unsigned secondSide)
@@ -172,20 +163,7 @@ private:
     void drawNeighbors(CubeID cube)
     {
         Neighborhood nb(cube);
-
-        String<64> str;
-        str << "nb "
-            << Hex(nb.neighborAt(TOP), 2) << " "
-            << Hex(nb.neighborAt(LEFT), 2) << " "
-            << Hex(nb.neighborAt(BOTTOM), 2) << " "
-            << Hex(nb.neighborAt(RIGHT), 2) << "\n";
-
-        str << "   +" << counters[cube].neighborAdd
-            << ", -" << counters[cube].neighborRemove
-            << "\n\n";
-
         BG0ROMDrawable &draw = vid[cube].bg0rom;
-        draw.text(vec(1,6), str);
 
         drawSideIndicator(draw, nb, vec( 1,  0), vec(14,  1), TOP);
         drawSideIndicator(draw, nb, vec( 0,  1), vec( 1, 14), LEFT);
