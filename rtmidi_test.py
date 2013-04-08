@@ -147,6 +147,7 @@ if __name__ == '__main__':
 
     # Midi Learn code:
     # comment the main call on top!
+
     #midi = Midi()
     #for group in range(0, 5):
     #    for effect in range(0, 4):
@@ -156,3 +157,16 @@ if __name__ == '__main__':
     #            raw_input()
     #            midi.cc(1, cc, 127)
     #            print '\n'
+
+# if only need one modif:
+
+#   group = 3
+#   effect = 2
+#   i = 0
+#   value = 'active'
+
+#   cc = mapping(group, effect, value)
+#   print 'group:{} effect:{} {}'.format(group, effect, value)
+#   raw_input()
+#   midi.cc(1, cc, 127)
+#   print '\n'
