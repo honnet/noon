@@ -101,9 +101,12 @@ private:
             str << "shake: " << motion[id].shake;
 
             if (id == kControlCube && motion[kControlCube].shake) {
-                if (!an_fx_is_affected)
-                    LOG("N\r\n"); // Next scene command
-                    // TODO: if touch then prev scene
+                if (!an_fx_is_affected) {
+                    if(cube.isTouching())
+                        LOG("P\r\n"); // Prev scene command
+                    else
+                        LOG("N\r\n"); // Next scene command
+                }
             }
         }
 

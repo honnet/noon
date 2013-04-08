@@ -35,6 +35,7 @@ class Midi:
 
     def cc(self, channel, number, value):
         print 'control_change<{}:{}:{}>'.format(channel, number, value)
+        assert(channel < 16)
         channelCC = 0xB0 | channel
         cc = [channelCC, number, value]
         self.midiout.send_message(cc)
@@ -48,7 +49,7 @@ class Transport (Controller):
         super(Transport, self).__init__(midi)
 
     def prev_scene(self): # TODO
-        Pass
+        self.midi.cc(15, 14, 127)
 
     def next_scene(self):
         self.midi.cc(15, 15, 127)
@@ -137,6 +138,8 @@ class Parser:
                 self.groups[group].effect(effect).deactivate()
             elif cmd == 'N':
                 self.transport.next_scene()
+            elif cmd == 'P':
+                self.transport.prev_scene()
 
 def main():
     parser = Parser()
@@ -145,28 +148,27 @@ def main():
 if __name__ == '__main__':
     main()
 
-    # Midi Learn code:
-    # comment the main call on top!
+#   # Midi Learn code:
+#   # comment the main call on top!
 
-    #midi = Midi()
-    #for group in range(0, 5):
-    #    for effect in range(0, 4):
-    #        for i, value in zip(range(0, 3), ['active', 'x', 'y']):
-    #            cc = mapping(group, effect, i)
-    #            print 'group:{} effect:{} {}'.format(group, effect, value)
-    #            raw_input()
-    #            midi.cc(1, cc, 127)
-    #            print '\n'
+#   midi = Midi()
+#   for group in range(0, 5):
+#       for effect in range(0, 4):
+#           for i, value in zip(range(0, 3), ['active', 'x', 'y']):
+#               cc = mapping(group, effect, i)
+#               print 'group:{} effect:{} {}'.format(group, effect, value)
+#               raw_input()
+#               midi.cc(1, cc, 127)
+#               print '\n'
 
-# if only need one modif:
+#   # next and previous scene commands:
 
-#   group = 3
-#   effect = 2
-#   i = 0
-#   value = 'active'
-
-#   cc = mapping(group, effect, value)
-#   print 'group:{} effect:{} {}'.format(group, effect, value)
+#   parser = Parser()
+#   print 'prev'
 #   raw_input()
-#   midi.cc(1, cc, 127)
+#   parser.transport.prev_scene()
+#   print 'next'
+#   raw_input()
+#   parser.transport.next_scene()
 #   print '\n'
+
