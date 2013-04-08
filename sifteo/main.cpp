@@ -15,6 +15,7 @@ typedef uint8_t EffectID;
 static const CubeID kControlCube = 0;
 static const EffectID kNoEffect = 0xFF;
 static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to which track cube?
+static bool an_fx_is_affected = 0;
 
 
 class SensorListener {
@@ -100,8 +101,9 @@ private:
             str << "shake: " << motion[id].shake;
 
             if (id == kControlCube && motion[kControlCube].shake) {
-                LOG("N\r\n"); // Next scene command
-                // TODO: if touch then prev scene
+                if (!an_fx_is_affected)
+                    LOG("N\r\n"); // Next scene command
+                    // TODO: if touch then prev scene
             }
         }
 
@@ -128,6 +130,7 @@ private:
             LOG("D%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = kNoEffect;
         }
+        an_fx_is_affected = 0;
 
         if (firstID < arraysize(counters)) {
             counters[firstID].neighborRemove++;
@@ -151,6 +154,7 @@ private:
             LOG("A%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = secondSide;
         }
+        an_fx_is_affected = 1;
 
         if (firstID < arraysize(counters)) {
             counters[firstID].neighborAdd++;
