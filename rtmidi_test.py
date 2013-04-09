@@ -12,7 +12,7 @@ class Midi:
     def __init__(self):
       available_ports = self.midiout.get_ports()
       if available_ports:
-          if len(available_ports) > 0:
+          if len(available_ports) > 1:
               print "Available ports:", available_ports
               portNum = 1
           else:
@@ -72,12 +72,12 @@ class Effect (Controller):
     def control(self, offset):
         return mapping(self.group.id, self.id, offset)
 
-    def activate(self, active=True):
+    def enable(self, active=True):
         control = self.control(0)
         self.midi.cc(1, control, 127 if active else 0)
 
-    def deactivate(self):
-        self.activate(False)
+    def disable(self):
+        self.enable(False)
 
 class Effect1D (Effect):
     def __init__(self, id_, midi, group):
@@ -123,22 +123,22 @@ class Parser:
 
             cmd = line[0]
 
-            if cmd == 'A':
+            if cmd == 'E':      # Enable effect
                 group = int(line[1])
                 effect = int(line[2])
-                self.groups[group].effect(effect).activate()
-            elif cmd == 'E':
+                self.groups[group].effect(effect).enable()
+            elif cmd == 'M':    # Modulate effect
                 group = int(line[1])
                 effect = int(line[2])
                 x, y, z = [int(v) for v in line[3:].split(':')]
                 self.groups[group].effect(effect).set_value_from_accelerometer(x, y, z)
-            elif cmd == 'D':
+            elif cmd == 'D':    # Disable effect
                 group = int(line[1])
                 effect = int(line[2])
-                self.groups[group].effect(effect).deactivate()
-            elif cmd == 'N':
+                self.groups[group].effect(effect).disable()
+            elif cmd == 'N':    # Next scene request
                 self.transport.next_scene()
-            elif cmd == 'P':
+            elif cmd == 'P':    # Previous scene request
                 self.transport.prev_scene()
 
 def main():
@@ -163,12 +163,12 @@ if __name__ == '__main__':
 
 #   # next and previous scene commands:
 
-#   parser = Parser()
+#   transport = Transport(self.midi)
 #   print 'prev'
 #   raw_input()
-#   parser.transport.prev_scene()
+#   transport.prev_scene()
 #   print 'next'
 #   raw_input()
-#   parser.transport.next_scene()
+#   transport.next_scene()
 #   print '\n'
 

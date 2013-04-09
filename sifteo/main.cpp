@@ -15,17 +15,10 @@ typedef uint8_t EffectID;
 static const CubeID kControlCube = 0;
 static const EffectID kNoEffect = 0xFF;
 static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to which track cube?
-static bool an_fx_is_affected = 0;
-
+static const unsigned kNoNeighbors = 0xFFFFFFFF;
 
 class SensorListener {
 public:
-    struct Counter {
-        unsigned touch;
-        unsigned neighborAdd;
-        unsigned neighborRemove;
-    } counters[CUBE_ALLOCATION];
-
     void install()
     {
         Events::neighborAdd.set(&SensorListener::onNeighborAdd, this);
@@ -46,8 +39,6 @@ private:
         CubeID cube(id);
         uint64_t hwid = cube.hwID();
 
-        bzero(counters[id]);
-
         vid[id].initMode(BG0_ROM);
         vid[id].attach(id);
         motion[id].attach(id);
@@ -56,23 +47,19 @@ private:
         String<128> str;
         if (id) {
             str << "\n\n\n\n\n";
-            str << "     TRACK\n\n";
-            str << "   NUMBER: " << cube << "\n";
+            str << "     Track\n\n";
+            str << "   number: " << cube << "\n";
         } else {
-            str << "      0\n";
-            str << "\n\n\n\n";
+            str << "      0\n\n\n\n\n";
             str << "    CONTROL\n";
             str << "1\n";
             str << "             3\n";
-            str << "     CUBE\n";
-            str << "\n\n\n\n";
+            str << "     CUBE\n\n\n\n\n";
             str << "       2\n";
         }
         vid[cube].bg0rom.text(vec(1,1), str);
 
-        // Draw initial state for all sensors
-        onAccelChange(cube);
-        onTouch(cube);
+        // Draw initial state
         drawNeighbors(cube);
 
         fx_affected[id] = kNoEffect;
@@ -80,8 +67,7 @@ private:
 
     void onTouch(unsigned id)
     {
-        CubeID cube(id);
-        counters[id].touch++;
+        // TODO allow incrementing track count here
     }
 
     void onAccelChange(unsigned id)
@@ -91,10 +77,11 @@ private:
 
         unsigned changeFlags = motion[id].update();
         if (changeFlags) {
-            // Tilt/shake changed
-
+            // was the control cube shaked ?
             if (id == kControlCube && motion[kControlCube].shake) {
-                if (!an_fx_is_affected) {
+                // avoid skip command when modulating effect:
+                Neighborhood nb(id);
+                if (nb.sys.value == kNoNeighbors) {
                     if(cube.isTouching())
                         LOG("P\r\n"); // Prev scene command
                     else
@@ -107,8 +94,8 @@ private:
             char x = accel.x/2 + 64;
             char y = accel.y/2 + 64;
             char z = accel.z/2 + 64;
-            // Effect F modulation for group G (format: EGFXXX:YYY:ZZZ)
-            LOG("E%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
+            // Modulate effect F for group G (format: MGFXXX:YYY:ZZZ)
+          LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
         }
     }
 
@@ -124,40 +111,28 @@ private:
             LOG("D%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = kNoEffect;
         }
-        an_fx_is_affected = 0;
 
-        if (firstID < arraysize(counters)) {
-            counters[firstID].neighborRemove++;
+        if (firstID < CUBE_ALLOCATION)
             drawNeighbors(firstID);
-        }
-        if (secondID < arraysize(counters)) {
-            counters[secondID].neighborRemove++;
+        if (secondID < CUBE_ALLOCATION)
             drawNeighbors(secondID);
-        }
     }
 
     void onNeighborAdd(unsigned firstID, unsigned firstSide, unsigned secondID, unsigned secondSide)
     {
-        // Activate effect F for group G (format: AGF)
-        // the group number is the number of the track cube
-        // the effrect number is the number of the side or the controlcube
+        // Enable effect F for group G (format: EGF)
         if (firstID == kControlCube) {
-            LOG("A%d%d\r\n", secondID, firstSide);
+            LOG("E%d%d\r\n", secondID, firstSide);
             fx_affected[secondID] = firstSide;
         } else if (secondID == kControlCube) {
-            LOG("A%d%d\r\n", firstID, secondSide);
+            LOG("E%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = secondSide;
         }
-        an_fx_is_affected = 1;
 
-        if (firstID < arraysize(counters)) {
-            counters[firstID].neighborAdd++;
+        if (firstID < CUBE_ALLOCATION)
             drawNeighbors(firstID);
-        }
-        if (secondID < arraysize(counters)) {
-            counters[secondID].neighborAdd++;
+        if (secondID < CUBE_ALLOCATION)
             drawNeighbors(secondID);
-        }
     }
 
     void drawNeighbors(CubeID cube)
@@ -174,7 +149,7 @@ private:
     static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
         Int2 topLeft, Int2 size, Side s)
     {
-        unsigned nbColor = draw.ORANGE;
+        unsigned nbColor = draw.BLUE;
         draw.fill(topLeft, size,
             nbColor | (nb.hasNeighborAt(s) ? draw.SOLID_FG : draw.SOLID_BG));
     }
