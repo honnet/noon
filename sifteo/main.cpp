@@ -6,7 +6,7 @@ static Metadata M = Metadata()
     .title("noon")
     .package("com.sifteo.noon", "0.2")
     .icon(Icon)
-    .cubeRange(2, CUBE_ALLOCATION);
+    .cubeRange(2, 5);
 
 static VideoBuffer vid[CUBE_ALLOCATION];
 static TiltShakeRecognizer motion[CUBE_ALLOCATION];
