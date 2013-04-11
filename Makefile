@@ -48,7 +48,7 @@ install: $(APP)
 test: $(APP) $(TARGET)
 	siftulator $(APP) --flush-logs | $(EXE)
 
-live: install $(TARGET)
+live: $(TARGET)
 	swiss listen $(APP) --flush-logs | $(EXE)
 
 clean:

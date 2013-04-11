@@ -14,6 +14,6 @@ include $(SDK_DIR)/Makefile.rules
 test: all
 	siftulator --flush-logs $(APP).elf | python ../rtmidi_test.py
 
-live: install
+live:
 	swiss listen $(APP).elf --flush-logs | python ../rtmidi_test.py
 
