@@ -16,7 +16,7 @@ static const CubeID kControlCube = 0;
 static const EffectID kNoEffect = 0xFF;
 static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to which track cube?
 static const unsigned kNoNeighbors = 0xFFFFFFFF;
-static bool recordingMode = false;
+static bool recordMode = false;
 static bool isRecording = false;
 
 class SensorListener {
