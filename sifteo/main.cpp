@@ -105,13 +105,9 @@ private:
                 LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
             }
         } else {
-            // play/stop if the control cube is shaked
+            // play if the control cube is shaked
             if (changeFlags && motion[id].shake) {
-                if(cube.isTouching()) {
-                    LOG("P\r\n"); // Play
-                } else {
-                    LOG("S\r\n"); // Stop
-                }
+                LOG("P\r\n");
             }
         }
     }

@@ -51,9 +51,6 @@ class Transport (Controller):
     def play(self):
         self.midi.cc(15, 15, 127)
 
-    def stop(self):
-        self.midi.cc(15, 14, 127)
-
 class Group (Controller):
     def __init__(self, id_, midi):
         super(Group, self).__init__(midi)
@@ -138,8 +135,6 @@ class Parser:
                 self.groups[group].effect(effect).disable()
             elif cmd == 'P':    # Play
                 self.transport.play()
-            elif cmd == 'S':    # Stop
-                self.transport.stop()
 
 def main():
     parser = Parser()
