@@ -70,6 +70,13 @@ private:
         // TODO allow incrementing track count here
     }
 
+    int ALWAYS_INLINE constrain(int value, int min, int max)
+    {
+        if (value <= min) return min;
+        if (value >= max) return max;
+        return value;
+    }
+
     void onAccelChange(unsigned id)
     {
         CubeID cube(id);
@@ -91,11 +98,11 @@ private:
         }
 
         if (id != kControlCube && fx_affected[id] != kNoEffect) {
-            char x = accel.x/2 + 64;
-            char y = accel.y/2 + 64;
-            char z = accel.z/2 + 64;
+            char x = constrain(accel.x + 64, 0, 127); // we get values in the range [-128; 127]
+            char y = constrain(accel.y + 64, 0, 127); // but we are only interested by [-64; 64]
+            char z = constrain(accel.z + 64, 0, 127); // and want to offet to the range [0; 127]
             // Modulate effect F for group G (format: MGFXXX:YYY:ZZZ)
-          LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
+            LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
         }
     }
 
