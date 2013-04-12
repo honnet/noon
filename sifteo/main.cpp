@@ -16,6 +16,7 @@ static const CubeID kControlCube = 0;
 static const EffectID kNoEffect = 0xFF;
 static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to which track cube?
 static const unsigned kNoNeighbors = 0xFFFFFFFF;
+static bool recordingMode = false;
 static bool isRecording = false;
 
 class SensorListener {
@@ -53,7 +54,7 @@ private:
         } else {
             str << "\n\n\n\n\n";
             str << " Mode: ";
-            str << (isRecording? "RECORD" : "PLAY  ");
+            str << (recordMode? "RECORD" : "PLAY  ");
             str << "\n\n\n";
             str << "(touch: toggle\n";
             str << "record / play)\n";
@@ -71,11 +72,11 @@ private:
         CubeID cube(id);
 
         if (id == kControlCube && cube.isTouching()) {
-            isRecording = !isRecording;
+            recordMode = !recordMode;
 
             String<32> str;
             str << " Mode: ";
-            str << (isRecording? "RECORD\n" : "PLAY  \n");
+            str << (recordMode? "RECORD\n" : "PLAY  \n");
             vid[cube].bg0rom.text(vec(1,6), str);
         }
     }
