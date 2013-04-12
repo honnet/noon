@@ -48,11 +48,11 @@ class Transport (Controller):
     def __init__(self, midi):
         super(Transport, self).__init__(midi)
 
-    def prev_scene(self): # TODO
-        self.midi.cc(15, 14, 127)
-
-    def next_scene(self):
+    def play(self):
         self.midi.cc(15, 15, 127)
+
+    def stop(self):
+        self.midi.cc(15, 14, 127)
 
 class Group (Controller):
     def __init__(self, id_, midi):
@@ -136,10 +136,10 @@ class Parser:
                 group = int(line[1])
                 effect = int(line[2])
                 self.groups[group].effect(effect).disable()
-            elif cmd == 'N':    # Next scene request
-                self.transport.next_scene()
-            elif cmd == 'P':    # Previous scene request
-                self.transport.prev_scene()
+            elif cmd == 'P':    # Play
+                self.transport.play()
+            elif cmd == 'S':    # Stop
+                self.transport.stop()
 
 def main():
     parser = Parser()

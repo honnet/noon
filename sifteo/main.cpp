@@ -4,7 +4,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("noon")
-    .package("com.sifteo.noon", "0.2")
+    .package("com.sifteo.noon", "2")
     .icon(Icon)
     .cubeRange(2, 5);
 
@@ -46,7 +46,7 @@ private:
 
         // Draw the cube's identity
         String<128> str;
-        if (id) {
+        if (id != kControlCube) {
             str << "\n\n\n\n\n";
             str << "     Track\n\n";
             str << "   number: " << cube << "\n";
@@ -93,26 +93,25 @@ private:
         auto accel = cube.accel();
 
         unsigned changeFlags = motion[id].update();
-        if (changeFlags) {
-            // was the control cube shaked ?
-            if (id == kControlCube && motion[kControlCube].shake) {
-                // avoid skip command when modulating effect:
-                Neighborhood nb(id);
-                if (nb.sys.value == kNoNeighbors) {
-                    if(cube.isTouching())
-                        LOG("P\r\n"); // Prev scene command
-                    else
-                        LOG("N\r\n"); // Next scene command
+
+        if (id != kControlCube) {
+            // Modulate effect for instrument cubes:
+            if (fx_affected[id] != kNoEffect) {
+                char x = constrain(accel.x + 64, 0, 127); // we get values in the range [-128; 127]
+                char y = constrain(accel.y + 64, 0, 127); // but we are only interested by [-64; 64]
+                char z = constrain(accel.z + 64, 0, 127); // and want to offet to the range [0; 127]
+                // Modulate effect F for group G (format: MGFXXX:YYY:ZZZ)
+                LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
+            }
+        } else {
+            // play/stop if the control cube is shaked
+            if (changeFlags && motion[id].shake) {
+                if(cube.isTouching()) {
+                    LOG("P\r\n"); // Play
+                } else {
+                    LOG("S\r\n"); // Stop
                 }
             }
-        }
-
-        if (id != kControlCube && fx_affected[id] != kNoEffect) {
-            char x = constrain(accel.x + 64, 0, 127); // we get values in the range [-128; 127]
-            char y = constrain(accel.y + 64, 0, 127); // but we are only interested by [-64; 64]
-            char z = constrain(accel.z + 64, 0, 127); // and want to offet to the range [0; 127]
-            // Modulate effect F for group G (format: MGFXXX:YYY:ZZZ)
-            LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
         }
     }
 
