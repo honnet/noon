@@ -16,6 +16,7 @@ static const CubeID kControlCube = 0;
 static const EffectID kNoEffect = 0xFF;
 static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to which track cube?
 static const unsigned kNoNeighbors = 0xFFFFFFFF;
+static bool isRecording = false;
 
 class SensorListener {
 public:
@@ -50,12 +51,12 @@ private:
             str << "     Track\n\n";
             str << "   number: " << cube << "\n";
         } else {
-            str << "      0\n\n\n\n\n";
-            str << "    CONTROL\n";
-            str << "1\n";
-            str << "             3\n";
-            str << "     CUBE\n\n\n\n\n";
-            str << "       2\n";
+            str << "\n\n\n\n\n";
+            str << " Mode: ";
+            str << (isRecording? "RECORD" : "PLAY  ");
+            str << "\n\n\n";
+            str << "(touch: toggle\n";
+            str << "record / play)\n";
         }
         vid[cube].bg0rom.text(vec(1,1), str);
 
@@ -67,7 +68,16 @@ private:
 
     void onTouch(unsigned id)
     {
-        // TODO allow incrementing track count here
+        CubeID cube(id);
+
+        if (id == kControlCube && cube.isTouching()) {
+            isRecording = !isRecording;
+
+            String<32> str;
+            str << " Mode: ";
+            str << (isRecording? "RECORD\n" : "PLAY  \n");
+            vid[cube].bg0rom.text(vec(1,6), str);
+        }
     }
 
     int ALWAYS_INLINE constrain(int value, int min, int max)
