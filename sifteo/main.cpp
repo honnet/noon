@@ -117,9 +117,17 @@ private:
                 LOG("M%d%d%d:%d:%d\r\n", id, fx_affected[id], x, y, z);
             }
         } else {
-            // play if the control cube is shaked
+            // play/record if the control cube is shaked
             if (changeFlags && motion[id].shake) {
-                LOG("P\r\n");
+                if (cube.isTouching()) {
+                    LOG("S\r\n");       // Stop
+                } else {
+                    if (recordMode) {
+                        LOG("R\r\n");   // Record
+                    } else {
+                        LOG("P\r\n");   // Play
+                    }
+                }
             }
         }
     }
