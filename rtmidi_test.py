@@ -134,17 +134,17 @@ class Parser:
                 note = int(line[1:])
                 self.midi.note_off(0, note)
             elif cmd == 'E':      # Enable effect
-                group = int(line[1])
-                effect = int(line[2])
+                group = 0 # int(line[1])
+                effect = 0 # int(line[2])
                 self.groups[group].effect(effect).enable()
             elif cmd == 'M':    # Modulate effect
-                group = int(line[1])
-                effect = int(line[2])
+                group = 0 # int(line[1])
+                effect = 0 # int(line[2])
                 x, y, z = [int(v) for v in line[3:].split(':')]
                 self.groups[group].effect(effect).set_value_from_accelerometer(x, y, z)
             elif cmd == 'D':    # Disable effect
-                group = int(line[1])
-                effect = int(line[2])
+                group = 0 # int(line[1])
+                effect = 0 # int(line[2])
                 self.groups[group].effect(effect).disable()
             elif cmd == 'P':    # Play
                 self.transport.play()
