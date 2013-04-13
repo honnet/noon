@@ -17,7 +17,7 @@ static const EffectID kNoEffect = 0xFF;
 static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to which track cube?
 static const unsigned kNoNeighbors = 0xFFFFFFFF;
 static bool recordMode = false;
-static bool isRecording = false;
+static bool isRecording[CUBE_ALLOCATION] = {0};
 static bool colorAllowed = false;
 
 class SensorListener {
@@ -83,12 +83,15 @@ private:
             }
         } else {
             const unsigned notes[CUBE_ALLOCATION] = {42, 43, 44, 45}; // TODO adapt !
-            if (cube.isTouching()) {
-                // Begin note
-                LOG("B%d\r\n", notes[id-1]);
-            } else {
-                // Finish note
-                LOG("F%d\r\n", notes[id-1]);
+            // mute notes if not recording:
+            if (!recordMode || (recordMode && isRecording[id])) {
+                if (cube.isTouching()) {
+                    // Begin note
+                    LOG("B%d\r\n", notes[id-1]);
+                } else {
+                    // Finish note
+                    LOG("F%d\r\n", notes[id-1]);
+                }
             }
         }
     }
@@ -109,7 +112,7 @@ private:
 
         if (id != kControlCube) {
             // Modulate effect for instrument cubes:
-            if (fx_affected[id] != kNoEffect) {
+            if (!recordMode && fx_affected[id] != kNoEffect) {
                 char x = constrain(accel.x + 64, 0, 127); // we get values in the range [-128; 127]
                 char y = constrain(accel.y + 64, 0, 127); // but we are only interested by [-64; 64]
                 char z = constrain(accel.z + 64, 0, 127); // and want to offet to the range [0; 127]
@@ -140,9 +143,11 @@ private:
         if (firstID == kControlCube) {
             LOG("D%d%d\r\n", secondID, firstSide);
             fx_affected[secondID] = kNoEffect;
+            isRecording[secondID] = false;
         } else if (secondID == kControlCube) {
             LOG("D%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = kNoEffect;
+            isRecording[firstID] = false;
         }
 
         colorAllowed = false;
@@ -159,9 +164,11 @@ private:
         if (firstID == kControlCube) {
             LOG("E%d%d\r\n", secondID, firstSide);
             fx_affected[secondID] = firstSide;
+            isRecording[secondID] = true;
         } else if (secondID == kControlCube) {
             LOG("E%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = secondSide;
+            isRecording[firstID] = true;
         }
 
         colorAllowed = (firstID == kControlCube || secondID == kControlCube);
