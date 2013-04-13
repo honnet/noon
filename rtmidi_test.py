@@ -115,6 +115,7 @@ class Parser:
     def parse(self):
         while True:
             line = sys.stdin.readline()
+
             if not line:
                 break
 
@@ -136,11 +137,13 @@ class Parser:
             elif cmd == 'P':    # Play
                 self.transport.play()
             elif cmd == 'B':    # Begin note
-                note = int(line[2:])
+                note = int(line[1:])
                 self.midi.note_on(0, note, 127)
+                print 'note on', note
             elif cmd == 'F':    # Finish note
-                note = int(line[2:])
-                self.midi.note_off(0, note, 0)
+                note = int(line[1:])
+                self.midi.note_off(0, note)
+                print 'note off', note
 
 
 def main():
