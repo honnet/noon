@@ -71,13 +71,24 @@ private:
     {
         CubeID cube(id);
 
-        if (id == kControlCube && cube.isTouching()) {
-            recordMode = !recordMode;
+        if (id == kControlCube) {
+            if (cube.isTouching()) {
+                recordMode = !recordMode;
 
-            String<32> str;
-            str << " Mode: ";
-            str << (recordMode? "RECORD\n" : "PLAY  \n");
-            vid[cube].bg0rom.text(vec(1,6), str);
+                String<32> str;
+                str << " Mode: ";
+                str << (recordMode? "RECORD\n" : "PLAY  \n");
+                vid[cube].bg0rom.text(vec(1,6), str);
+            }
+        } else {
+            const unsigned notes[CUBE_ALLOCATION] = {42, 43, 44, 45}; // TODO adapt !
+            if (cube.isTouching()) {
+                // Begin note
+                LOG("B%d\r\n", notes[id-1]);
+            } else {
+                // Finish note
+                LOG("F%d\r\n", notes[id-1]);
+            }
         }
     }
 
