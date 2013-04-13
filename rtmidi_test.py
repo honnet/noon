@@ -127,7 +127,13 @@ class Parser:
 
             cmd = line[0]
 
-            if cmd == 'E':      # Enable effect
+            if cmd == 'B':    # Begin note
+                note = int(line[1:])
+                self.midi.note_on(0, note, 127)
+            elif cmd == 'F':    # Finish note
+                note = int(line[1:])
+                self.midi.note_off(0, note)
+            elif cmd == 'E':      # Enable effect
                 group = int(line[1])
                 effect = int(line[2])
                 self.groups[group].effect(effect).enable()
@@ -146,14 +152,6 @@ class Parser:
                 self.transport.stop()
             elif cmd == 'R':    # Record
                 self.transport.record()
-            elif cmd == 'B':    # Begin note
-                note = int(line[1:])
-                self.midi.note_on(0, note, 127)
-                print 'note on', note
-            elif cmd == 'F':    # Finish note
-                note = int(line[1:])
-                self.midi.note_off(0, note)
-                print 'note off', note
 
 
 def main():
