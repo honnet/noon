@@ -18,6 +18,7 @@ static EffectID fx_affected[CUBE_ALLOCATION]; // which effect is affected to whi
 static const unsigned kNoNeighbors = 0xFFFFFFFF;
 static bool recordMode = false;
 static bool isRecording = false;
+static bool colorAllowed = false;
 
 class SensorListener {
 public:
@@ -136,6 +137,8 @@ private:
             fx_affected[firstID] = kNoEffect;
         }
 
+        colorAllowed = false;
+
         if (firstID < CUBE_ALLOCATION)
             drawNeighbors(firstID);
         if (secondID < CUBE_ALLOCATION)
@@ -152,6 +155,8 @@ private:
             LOG("E%d%d\r\n", firstID, secondSide);
             fx_affected[firstID] = secondSide;
         }
+
+        colorAllowed = (firstID == kControlCube || secondID == kControlCube);
 
         if (firstID < CUBE_ALLOCATION)
             drawNeighbors(firstID);
@@ -173,9 +178,10 @@ private:
     static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
         Int2 topLeft, Int2 size, Side s)
     {
-        unsigned nbColor = draw.BLUE;
+        unsigned nbColor = recordMode? draw.RED : draw.BLUE;
+        bool enabled = nb.hasNeighborAt(s) && colorAllowed;
         draw.fill(topLeft, size,
-            nbColor | (nb.hasNeighborAt(s) ? draw.SOLID_FG : draw.SOLID_BG));
+            nbColor | (enabled ? draw.SOLID_FG : draw.SOLID_BG));
     }
 };
 
